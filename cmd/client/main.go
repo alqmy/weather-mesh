@@ -39,10 +39,10 @@ func main() {
 				Temperature: update.Temperature,
 				Humidity:    update.Humidity,
 				Pressure:    update.Pressure,
-				Latitude:    update.Location.Latitude,
-				Longitude:   update.Location.Longitude,
-				Dewpoint:    update.Dewpoint,
-				NodeName:    name,
+				// Latitude:    update.Location.Latitude,
+				// Longitude:   update.Location.Longitude,
+				Dewpoint: update.Dewpoint,
+				NodeName: name,
 			}
 		}
 	}()

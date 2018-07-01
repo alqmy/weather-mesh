@@ -14,10 +14,10 @@ type WeatherSnapshot struct {
 	Dewpoint    float64 `json:"dewpoint"`
 	Humidity    float64 `json:"humidity"`
 	Pressure    float64 `json:"pressure"`
-	Location    struct {
-		Longitude float64 `json:"lon"`
-		Latitude  float64 `json:"lat"`
-	} `json:"location"`
+	// Location    struct {
+	// 	Longitude float64 `json:"lon"`
+	// 	Latitude  float64 `json:"lat"`
+	// } `json:"location"`
 	// At time.Time `json:"timecollected"`
 }
 
