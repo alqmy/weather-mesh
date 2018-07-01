@@ -131,6 +131,25 @@ func main() {
 		json.NewEncoder(w).Encode(snap)
 	})
 
+	h.HandleFunc("/nodes", func(w http.ResponseWriter, r *http.Request) {
+		rows, err := db.Query("SELECT UNIQUE node FROM updates")
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		names := []string{}
+
+		for rows.Next() {
+			name := ""
+			if err := rows.Scan(&name)
+			names = append(names, name)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(names)
+	})
+
 	handler := cors.Default().Handler(h)
 
 	go func() {
