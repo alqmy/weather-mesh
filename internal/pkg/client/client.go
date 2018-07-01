@@ -22,6 +22,7 @@ type WeatherSnapshot struct {
 }
 
 func GenerateName() string {
+	rand.Seed(100)
 	n := rand.Intn(len(Nouns))
 	a := rand.Intn(len(Adjectives))
 

@@ -17,6 +17,7 @@ import (
 	m "github.com/alqmy/weather-mesh/internal/pkg/members"
 	"github.com/alqmy/weather-mesh/internal/pkg/messages"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/rs/cors"
 )
 
 var (
@@ -130,8 +131,10 @@ func main() {
 		json.NewEncoder(w).Encode(snap)
 	})
 
+	handler := cors.Default().Handler(h)
+
 	go func() {
-		errChan <- http.ListenAndServe(":8080", h)
+		errChan <- http.ListenAndServe(":8080", handler)
 	}()
 
 	select {
