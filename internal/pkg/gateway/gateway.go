@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"time"
 	"context"
 	"encoding/json"
 	"log"
@@ -79,7 +80,7 @@ func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- m
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		default:
+		case <-time.After(1*time.Second)
 		}
 	}
 }
