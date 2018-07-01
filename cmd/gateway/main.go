@@ -132,7 +132,7 @@ func main() {
 	})
 
 	h.HandleFunc("/nodes", func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query("SELECT UNIQUE node FROM updates")
+		rows, err := db.Query("SELECT DISTINCT node FROM updates")
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
