@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"math/rand"
 	"os"
-	"time"
 
 	"github.com/alqmy/weather-mesh/internal/pkg/messages"
 	"github.com/pebbe/zmq4"
@@ -19,7 +18,7 @@ type WeatherSnapshot struct {
 		Longitude float64 `json:"lon"`
 		Latitude  float64 `json:"lat"`
 	} `json:"location"`
-	At time.Time `json:"timecollected"`
+	// At time.Time `json:"timecollected"`
 }
 
 func GenerateName() string {

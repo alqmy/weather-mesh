@@ -3,6 +3,7 @@ package client_test
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"sync"
 	"testing"
 
@@ -59,4 +60,17 @@ func TestPushWeatherUpdates(t *testing.T) {
 	}()
 
 	wg.Wait()
+}
+
+func TestReadWeatherUpdate(t *testing.T) {
+	ioutil.WriteFile("./data.json", []byte(`{"temperature": 70.86, "dewpoint": 61.09, "humidity": 72.85, "pressure": 29.97, "location": {"lat": 0, "lon": 0}, "timecollected": "2018-07-01 03:20:44", "sensorID": "Node-01"}`), 0644)
+
+	update, err := client.ReadWeatherUpdate("./data.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if update == nil {
+		t.Fatal("Expected not nil")
+	}
 }
