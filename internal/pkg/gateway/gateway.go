@@ -80,7 +80,7 @@ func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- m
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(1 * time.Second):
+		case <-time.After(500 * time.Millisecond):
 		}
 	}
 }
