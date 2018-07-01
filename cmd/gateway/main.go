@@ -56,29 +56,19 @@ func main() {
 	}
 	defer pub.Close()
 
-	sub, err := c.NewSocket(zmq4.SUB)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := sub.Connect("tcp://localhost:5000"); err != nil {
-		log.Fatal(err)
-	}
-	defer sub.Close()
-	sub.SetSubscribe("")
-
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := sql.Open("sqlite3", "./foo.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	db.Exec(`CREATE TABLE updates (
+	db.Exec(`CREATE TABLE IF NOT EXISTS updates (
 		temperature REAL,
 		humidity REAL,
-		pressure REAL
+		pressure REAL,
+		dewpoint REAL,
+		node TEXT
 	)`)
-
-	db.Exec(`INSERT INTO updates (temperature, humidity, pressure) VALUES (0,0,0)`)
 
 	errChan := make(chan error, 1)
 
@@ -87,7 +77,7 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	updates := make(chan messages.WeatherUpdate, 100)
+	updates := make(chan messages.WeatherUpdate)
 	defer close(updates)
 
 	// Start pulling weather updates
@@ -99,14 +89,15 @@ func main() {
 			}
 
 			_, err = tx.Exec(
-				"INSERT INTO updates (temperature, humidity, pressure) VALUES (?,?,?)",
+				"INSERT INTO updates (temperature, dewpoint, humidity, pressure, node) VALUES (?,?,?,?,?)",
 				update.Temperature,
+				update.Dewpoint,
 				update.Humidity,
 				update.Pressure,
+				update.NodeName,
 			)
 			if err != nil {
 				tx.Rollback()
-				errChan <- err
 				return
 			}
 
@@ -120,12 +111,13 @@ func main() {
 
 	h := http.NewServeMux()
 	h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		row := db.QueryRow("SELECT temperature, humidity, pressure FROM updates")
+		row := db.QueryRow("SELECT AVG(temperature), AVG(dewpoint), AVG(humidity), AVG(pressure) FROM updates")
 
 		snap := client.WeatherSnapshot{}
 
 		err := row.Scan(
 			&snap.Temperature,
+			&snap.Dewpoint,
 			&snap.Humidity,
 			&snap.Pressure,
 		)

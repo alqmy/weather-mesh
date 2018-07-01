@@ -45,6 +45,7 @@ func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- m
 
 	for {
 		raw, err := pull.RecvBytes(0)
+		log.Println(string(raw))
 		if err != nil {
 			return err
 		}
@@ -52,7 +53,7 @@ func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- m
 
 		err = json.Unmarshal(raw, message)
 		if err != nil {
-			log.Printf("%##v\n", err)
+			log.Printf("%v\n", err)
 			continue
 		}
 
@@ -62,7 +63,7 @@ func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- m
 
 			err = json.Unmarshal(message.Data, &update)
 			if err != nil {
-				log.Printf("%##v\n", err)
+				log.Printf("%v\n", err)
 				continue
 			}
 
@@ -79,7 +80,6 @@ func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- m
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			return nil
 		}
 	}
 }
