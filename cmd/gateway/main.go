@@ -142,7 +142,10 @@ func main() {
 
 		for rows.Next() {
 			name := ""
-			if err := rows.Scan(&name)
+			if err := rows.Scan(&name); err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
 			names = append(names, name)
 		}
 
