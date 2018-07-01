@@ -1,10 +1,10 @@
 package gateway
 
 import (
-	"time"
 	"context"
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/alqmy/weather-mesh/internal/pkg/messages"
 	"github.com/pebbe/zmq4"
@@ -80,7 +80,7 @@ func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- m
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(1*time.Second)
+		case <-time.After(1 * time.Second):
 		}
 	}
 }
