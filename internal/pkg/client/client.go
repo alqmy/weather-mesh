@@ -63,6 +63,7 @@ func ReadWeatherUpdate(filename string) (*WeatherSnapshot, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	d := json.NewDecoder(file)
 

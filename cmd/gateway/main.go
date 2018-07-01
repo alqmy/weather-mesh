@@ -45,6 +45,7 @@ func main() {
 	if err := pull.Bind("tcp://*:3132"); err != nil {
 		log.Fatal(err)
 	}
+	defer pull.Close()
 
 	pub, err := c.NewSocket(zmq4.PUB)
 	if err != nil {
@@ -53,6 +54,17 @@ func main() {
 	if err := pub.Bind("tcp://*:5000"); err != nil {
 		log.Fatal(err)
 	}
+	defer pub.Close()
+
+	sub, err := c.NewSocket(zmq4.SUB)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := sub.Connect("tcp://localhost:5000"); err != nil {
+		log.Fatal(err)
+	}
+	defer sub.Close()
+	sub.SetSubscribe("")
 
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
@@ -68,34 +80,19 @@ func main() {
 
 	db.Exec(`INSERT INTO updates (temperature, humidity, pressure) VALUES (0,0,0)`)
 
-	errChan := make(chan error)
+	errChan := make(chan error, 1)
 
 	// main process context for graceful cancellation
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	updates := make(chan messages.WeatherUpdate)
-	publish := make(chan messages.WeatherUpdate)
-	record := make(chan messages.WeatherUpdate)
+	updates := make(chan messages.WeatherUpdate, 100)
 	defer close(updates)
-	defer close(publish)
-	defer close(record)
 
 	// Start pulling weather updates
 	go func() {
-		errChan <- gateway.PullWeatherUpdates(ctx, pull, updates)
-	}()
-
-	go func() {
-		errChan <- gateway.PublishWeatherUpdates(publish, pub)
-	}()
-
-	go duplicateStreams(updates, publish, record)
-
-	go func() {
-
-		for update := range record {
+		errChan <- gateway.PullWeatherUpdates(ctx, pull, updates, func(update messages.WeatherUpdate) {
 			tx, err := db.Begin()
 			if err != nil {
 				log.Fatal(err)
@@ -114,12 +111,16 @@ func main() {
 			}
 
 			tx.Commit()
-		}
+		})
+	}()
+
+	go func() {
+		errChan <- gateway.PublishWeatherUpdates(updates, pub)
 	}()
 
 	h := http.NewServeMux()
 	h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		row := db.QueryRow("SELECT AVG(temperature), AVG(humidity), AVG(pressure) FROM updates")
+		row := db.QueryRow("SELECT temperature, humidity, pressure FROM updates")
 
 		snap := client.WeatherSnapshot{}
 
@@ -135,7 +136,6 @@ func main() {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(snap)
-		w.WriteHeader(200)
 	})
 
 	go func() {

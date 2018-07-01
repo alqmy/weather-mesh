@@ -32,7 +32,8 @@ func main() {
 		for {
 			update, err := client.ReadWeatherUpdate(weatherFile)
 			if err != nil {
-				errChan <- err
+				log.Println(err)
+				continue
 			}
 
 			updates <- messages.WeatherUpdate{

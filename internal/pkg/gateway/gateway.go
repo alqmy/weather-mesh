@@ -9,6 +9,8 @@ import (
 	"github.com/pebbe/zmq4"
 )
 
+type Callback func(messages.WeatherUpdate)
+
 // PublishWeatherUpdates publishes a stream of weather updates to a zmq Pub socket
 func PublishWeatherUpdates(updates <-chan messages.WeatherUpdate, pub *zmq4.Socket) error {
 
@@ -39,7 +41,7 @@ func PublishWeatherUpdates(updates <-chan messages.WeatherUpdate, pub *zmq4.Sock
 }
 
 // PullWeatherUpdates listens on a pull socket and pushes updates to a channel
-func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- messages.WeatherUpdate) error {
+func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- messages.WeatherUpdate, callbacks ...Callback) error {
 
 	for {
 		raw, err := pull.RecvBytes(0)
@@ -65,6 +67,12 @@ func PullWeatherUpdates(ctx context.Context, pull *zmq4.Socket, updates chan<- m
 			}
 
 			updates <- update
+
+			go func(update messages.WeatherUpdate) {
+				for _, c := range callbacks {
+					c(update)
+				}
+			}(update)
 		}
 
 		select {
